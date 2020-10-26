@@ -26,7 +26,7 @@ uint8_t RH_RF95::_interruptCount = 0; // Index into _deviceForInterrupt for next
 PROGMEM static const RH_RF95::ModemConfig MODEM_CONFIG_TABLE[] =
 {
     //  1d,     1e,      26
-    { 0x72,   0x74,    0x04}, // Bw125Cr45Sf128 (the chip default), AGC enabled
+    { 0x78,   0x74,    0x04}, // Bw125Cr48Sf128, AGC enabled
     { 0x92,   0x74,    0x04}, // Bw500Cr45Sf128, AGC enabled
     { 0x48,   0x94,    0x04}, // Bw31_25Cr48Sf512, AGC enabled
     { 0x78,   0xc4,    0x0c}, // Bw125Cr48Sf4096, AGC enabled
@@ -145,6 +145,9 @@ bool RH_RF95::init()
     setFrequency(434.0);
     // Lowish power
     setTxPower(13);
+
+    // LNA settings, based on Heltec dev board library
+    spiWrite(RH_RF95_REG_0C_LNA, spiRead(RH_RF95_REG_0C_LNA) | 0x03);
 
     return true;
 }
