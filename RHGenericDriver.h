@@ -72,6 +72,12 @@ public:
     /// \return true if a new, complete, error-free uncollected message is available to be retreived by recv().
     virtual bool available() = 0;
 
+    /// Passively tests whether a new message is available
+    /// from the Driver.
+    /// This can be called multiple times in a timeout loop
+    /// \return true if a new, complete, error-free uncollected message is available to be retreived by recv()
+    virtual bool availablePassive() = 0;
+
     /// Turns the receiver on if it not already on.
     /// If there is a valid message available, copy it to buf and return true
     /// else return false.
@@ -82,6 +88,9 @@ public:
     /// \param[in,out] len Pointer to available space in buf. Set to the actual number of octets copied.
     /// \return true if a valid message was copied to buf
     virtual bool recv(uint8_t* buf, uint8_t* len) = 0;
+
+    /// "Passive" counterpart to above method
+    virtual bool recvPassive(uint8_t* buf, uint8_t* len) = 0;
 
     /// Waits until any previous transmit packet is finished being transmitted with waitPacketSent().
     /// Then optionally waits for Channel Activity Detection (CAD) 
@@ -95,6 +104,14 @@ public:
     /// \return true if the message length was valid and it was correctly queued for transmit. Return false
     /// if CAD was requested and the CAD timeout timed out before clear channel was detected.
     virtual bool send(const uint8_t* data, uint8_t len) = 0;
+
+    /// Similar to send() above but does not rely on waitPacketSent() or waitCAD() and does not call
+    /// setModeIdle().
+    /// \param[in] data Array of data to be sent
+    /// \param[in] len Number of bytes of data to send
+    /// \return true if the message length was valid and it was correctly queued for transmit. Return false
+    /// otherwise.
+    virtual bool sendPassive(const uint8_t* data, uint8_t len) = 0;
 
     /// Returns the maximum message length 
     /// available in this Driver.

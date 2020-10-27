@@ -268,6 +268,16 @@ bool RH_RF95::available()
     return _rxBufValid; // Will be set by the interrupt handler when a good message is received
 }
 
+bool RH_RF95::availablePassive()
+{
+    if (_mode == RHModeTx)
+    {
+      return false;
+    }
+
+    return _rxBufValid; // Will be set by the interrupt handler when a good message is received
+}
+
 void RH_RF95::clearRxBuf()
 {
     ATOMIC_BLOCK_START;
@@ -293,6 +303,23 @@ bool RH_RF95::recv(uint8_t* buf, uint8_t* len)
     return true;
 }
 
+bool RH_RF95::recvPassive(uint8_t* buf, uint8_t* len)
+{
+    if (!availablePassive())
+	return false;
+    if (buf && len)
+    {
+	ATOMIC_BLOCK_START;
+	// Skip the 4 headers that are at the beginning of the rxBuf
+	if (*len > _bufLen-RH_RF95_HEADER_LEN)
+	    *len = _bufLen-RH_RF95_HEADER_LEN;
+	memcpy(buf, _buf+RH_RF95_HEADER_LEN, *len);
+	ATOMIC_BLOCK_END;
+    }
+    clearRxBuf(); // This message accepted and cleared
+    return true;
+}
+
 bool RH_RF95::send(const uint8_t* data, uint8_t len)
 {
     if (len > RH_RF95_MAX_MESSAGE_LEN)
@@ -303,6 +330,39 @@ bool RH_RF95::send(const uint8_t* data, uint8_t len)
 
     if (!waitCAD())
 	return false;  // Check channel activity
+
+    // Position at the beginning of the FIFO
+    spiWrite(RH_RF95_REG_0D_FIFO_ADDR_PTR, 0);
+    // The headers
+    spiWrite(RH_RF95_REG_00_FIFO, _txHeaderTo);
+    spiWrite(RH_RF95_REG_00_FIFO, _txHeaderFrom);
+    spiWrite(RH_RF95_REG_00_FIFO, _txHeaderId);
+    spiWrite(RH_RF95_REG_00_FIFO, _txHeaderFlags);
+    // The message data
+    spiBurstWrite(RH_RF95_REG_00_FIFO, data, len);
+    spiWrite(RH_RF95_REG_22_PAYLOAD_LENGTH, len + RH_RF95_HEADER_LEN);
+
+    setModeTx(); // Start the transmitter
+    // when Tx is done, interruptHandler will fire and radio mode will return to STANDBY
+    return true;
+}
+
+bool RH_RF95::sendPassive(const uint8_t* data, uint8_t len)
+{
+    if (len > RH_RF95_MAX_MESSAGE_LEN)
+	return false;
+
+    // Need to be Idle
+    if (_mode != RHModeIdle)
+    {
+      return false;
+    }
+
+    // Check channel activity
+    if (isChannelActive())
+    {
+      return false;
+    }
 
     // Position at the beginning of the FIFO
     spiWrite(RH_RF95_REG_0D_FIFO_ADDR_PTR, 0);
