@@ -1324,8 +1324,9 @@ these examples and explanations and extend them to suit your needs.
  #define ATOMIC_BLOCK_END xt_wsr_ps(__savedPS);}
 #else 
  // TO BE DONE:
- #define ATOMIC_BLOCK_START
- #define ATOMIC_BLOCK_END
+ extern portMUX_TYPE _spiMutex;
+ #define ATOMIC_BLOCK_START vTaskEnterCritical(&_spiMutex);
+ #define ATOMIC_BLOCK_END   vTaskExitCritical(&_spiMutex);
 #endif
 
 ////////////////////////////////////////////////////
