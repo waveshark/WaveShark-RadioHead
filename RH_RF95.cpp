@@ -138,11 +138,10 @@ bool RH_RF95::init()
 
     // Set up default configuration
     // No Sync Words in LORA mode.
-    setModemConfig(Bw125Cr45Sf128); // Radio default
-//    setModemConfig(Bw125Cr48Sf4096); // slow and reliable?
-    setPreambleLength(8); // Default is 8
-    // An innocuous ISM frequency, same as RF22's
-    setFrequency(434.0);
+    // setModemConfig(Bw125Cr45Sf128); // Radio default
+    setModemConfig(Bw125Cr48Sf4096); // slow and reliable?
+    setPreambleLength(24); // Default is 8
+    setFrequency(915.0);
     // Lowish power
     setTxPower(13);
 
@@ -447,7 +446,7 @@ void RH_RF95::setModeTx()
     if (_mode != RHModeTx)
     {
 	spiWrite(RH_RF95_REG_01_OP_MODE, RH_RF95_MODE_TX);
-	spiWrite(RH_RF95_REG_40_DIO_MAPPING1, 0x40); // Interrupt on TxDone
+	spiWrite(RH_RF95_REG_40_DIO_MAPPING1, 0x50); // Interrupt on TxDone
 	_mode = RHModeTx;
     }
 }
@@ -528,7 +527,7 @@ bool RH_RF95::isChannelActive()
     if (_mode != RHModeCad)
     {
         spiWrite(RH_RF95_REG_01_OP_MODE, RH_RF95_MODE_CAD);
-        spiWrite(RH_RF95_REG_40_DIO_MAPPING1, 0x80); // Interrupt on CadDone
+        spiWrite(RH_RF95_REG_40_DIO_MAPPING1, 0xA0); // Interrupt on CadDone
         _mode = RHModeCad;
     }
 
